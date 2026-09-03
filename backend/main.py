@@ -29,13 +29,17 @@ async def detect(
     confidence: float = Form(0.5)
 ):
     image_bytes = await image.read()
-    detection_data = detect_image(
+    detection_result = detect_image(
         image_bytes,
         confidence
     )
 
+    detection_data = detection_result[0]             #分别取出检测数据和结果图片
+    result_image_base64 = detection_result[1]
+
     return {
         "filename": image.filename,
         "confidence": confidence,
-        "objects": detection_data
+        "objects": detection_data,
+        "result_image": result_image_base64
     }

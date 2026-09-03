@@ -1,6 +1,9 @@
 from io import BytesIO
 from PIL import Image
 from ultralytics import YOLO
+import base64
+import cv2
+
 
 
 model = YOLO("yolov8n.pt")                           #启动后端时加载一次模型
@@ -34,4 +37,23 @@ def detect_image(image_bytes, confidence_threshold):
             "box": rounded_coordinates
         })
 
-    return detection_data
+    result_image = result.plot()                       #在原图上画出检测框
+
+    encode_result = cv2.imencode(
+        ".jpg",
+        result_image
+    )
+
+    encode_success = encode_result[0]                  #分别取出转换状态和转换后的图片
+    encoded_image = encode_result[1]
+
+    if encode_success == False:
+        raise ValueError("检测结果图片转换失败")
+
+    result_image_bytes = encoded_image.tobytes()       #把结果图片转换成二进制数据
+    base64_bytes = base64.b64encode(
+        result_image_bytes
+    )
+    result_image_base64 = base64_bytes.decode("utf-8") #Base64字节转换成可以放进JSON的字符串
+
+    return detection_data, result_image_base64
