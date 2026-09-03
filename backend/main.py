@@ -1,6 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from backend.yolo_func import detect_image
-
+from backend.yolo_func import detect_image, segment_image
 app = FastAPI()                                      #创建FastAPI应用
 
 
@@ -41,5 +40,28 @@ async def detect(
         "filename": image.filename,
         "confidence": confidence,
         "objects": detection_data,
+        "result_image": result_image_base64
+    }
+
+
+@app.post("/segment")                                #接收图片并返回YOLO图像分割结果
+async def segment(
+    image: UploadFile = File(...),
+    confidence: float = Form(0.5)
+):
+    image_bytes = await image.read()
+
+    segmentation_result = segment_image(
+        image_bytes,
+        confidence
+    )
+
+    segmentation_data = segmentation_result[0]       #分别取出分割数据和结果图片
+    result_image_base64 = segmentation_result[1]
+
+    return {
+        "filename": image.filename,
+        "confidence": confidence,
+        "objects": segmentation_data,
         "result_image": result_image_base64
     }
