@@ -1,5 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from backend.yolo_func import detect_image, segment_image
+if __name__ == "__main__":
+    from yolo_func import detect_image, segment_image
+else:
+    from backend.yolo_func import detect_image, segment_image
 from io import BytesIO
 from PIL import Image
 
@@ -106,3 +109,9 @@ async def segment(
         "objects": segmentation_data,
         "result_image": result_image_base64
     }
+
+
+if __name__ == "__main__":                            #点击Run Code时启动后端服务
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)
