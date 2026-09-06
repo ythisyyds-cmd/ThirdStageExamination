@@ -1,3 +1,4 @@
+from fastapi import WebSocket
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 if __name__ == "__main__":
     from yolo_func import detect_image, segment_image
@@ -111,7 +112,45 @@ async def segment(
     }
 
 
-if __name__ == "__main__":                            #点击Run Code时启动后端服务
+@app.websocket("/ws-test")
+async def websocket_test(websocket: WebSocket):
+    await websocket.accept()                          #接受客户端连接
+
+    request_data = await websocket.receive_json()     #先接收处理参数 自动解析成字典
+    task_type = request_data["task_type"]
+    confidence = request_data["confidence"]
+
+    image_bytes = await websocket.receive_bytes()     #再接收图片的二进制数据
+    image_size = len(image_bytes)
+
+    if image_size == 0:
+        error_data = {"message": "上传的图片内容为空"}
+        await websocket.send_json(error_data)         #把错误信息发回客户端
+        await websocket.close()
+        return                                        #结束函数
+
+    try:
+        image_file = BytesIO(image_bytes)             #把收到的图片数据包装成文件
+        checked_image = Image.open(image_file)
+        checked_image.load()                          #实际读取图片 检查内容是否有效
+        checked_image.close()
+    except OSError:
+        error_data = {"message": "图片无法读取 请检查文件内容"}
+        await websocket.send_json(error_data)
+        await websocket.close()
+        return
+
+    reply = {
+        "message": "图片数据已收到",
+        "task_type": task_type,
+        "confidence": confidence,
+        "image_size": image_size
+    }
+    await websocket.send_json(reply)                 #把接收情况转换成JSON发回客户端
+    await websocket.close()
+
+
+if __name__ == "__main__":                          
     import uvicorn
 
     uvicorn.run(app, host="127.0.0.1", port=8000)

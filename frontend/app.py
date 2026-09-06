@@ -16,7 +16,7 @@ def process_image(image_path, confidence, task_type):
     if content_type == None:
         raise gr.Error("无法判断图片类型")
 
-    if task_type == "目标检测":                      #根据处理类型选择后端接口
+    if task_type == "目标检测":                       #根据处理类型选择后端接口
         url = "http://127.0.0.1:8000/detect"
     elif task_type == "图像分割":
         url = "http://127.0.0.1:8000/segment"
@@ -99,11 +99,19 @@ with gr.Blocks(title="Third Stage Examination") as demo:
         variant="primary"
     )
 
+    clear_button = gr.ClearButton(
+        value="清空"                                #先创建按钮 确定显示位置
+    )
+
     result_table = gr.Dataframe(
         headers=["类别", "置信度"],
         datatype=["str", "number"],
         interactive=False,                          #表格只用于显示识别结果
         label="识别结果"
+    )
+
+    clear_button.add(
+        [input_image, output_image, result_table]    #表格创建后再指定清空对象
     )
 
     process_button.click(                           #按顺序传入图片路径 置信度和处理类型
